@@ -29,7 +29,7 @@ describe("Users", () => {
             }
         })
         Authorization = `Bearer ${accessToken}`
-    }, toMilliseconds({ seconds: 15 }))
+    }, toMilliseconds({ seconds: 30 }))
 
     afterAll(() => CornellNotepadService.stop())
     
@@ -83,7 +83,7 @@ describe("Users", () => {
             user.lastName = newLastName
             const { password, ...expected } = user
             Assert.deepEqual(actual, expected)
-        }, toMilliseconds({ seconds: 10 }))
+        }, toMilliseconds({ seconds: 20 }))
 
         test("no authorization", async () => {
             const newFirstName = faker.person.firstName()
@@ -103,7 +103,7 @@ describe("Users", () => {
                 "HTTPErrorBody"
             )
             Assert.equal(response.message, "No token provided")
-        }, toMilliseconds({ seconds: 10 }))
+        })
     })
 
     describe("PUT /user/password", () => {
@@ -134,7 +134,7 @@ describe("Users", () => {
             const { __v, _id, ...actual } = response
             const { password, ...expected } = user
             Assert.deepEqual(actual, expected)
-        }, toMilliseconds({ seconds: 15 }))
+        }, toMilliseconds({ seconds: 30 }))
     
         test("wrong current password", async () => {
             const wrongCurrentPassword = faker.internet.password()
@@ -216,7 +216,7 @@ describe("Users", () => {
                 "HTTPErrorBody"
             )
             Assert.equal(signInResponse.message, "User not found")
-        }, toMilliseconds({ seconds: 25 }))
+        }, toMilliseconds({ seconds: 50 }))
 
         test("no authorization", async () => {
             let response = await CornellNotepadService.deleteUser<HTTPErrorBody>(

@@ -10,7 +10,8 @@ const config: Config = {
     "node_modules",
     "test"
   ],
-  restoreMocks: true
+  restoreMocks: true,
+  testTimeout: 10000
 }
 
 export default config

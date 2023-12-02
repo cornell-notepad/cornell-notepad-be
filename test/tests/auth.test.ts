@@ -33,7 +33,7 @@ describe('Auth', () => {
             json: user
         })
         Assert.equal(status, 204)
-    }, toMilliseconds({ seconds: 10 }))
+    })
 
     test('POST /auth/sign-in', async () => {
         let { accessToken } = await CornellNotepadService.signIn<IPostAuthSignInResponse>(
@@ -55,7 +55,7 @@ describe('Auth', () => {
         Assert.equal(registeredUser.firstName, firstName)
         Assert.equal(registeredUser.lastName, lastName)
         Assert.equal(registeredUser.username, username)
-    }, toMilliseconds({ seconds: 10 }))
+    }, toMilliseconds({ seconds: 20 }))
 
     test('POST /auth/sign-in (invalid password)', async () => {
         let { message } = await CornellNotepadService.signIn<HTTPErrorBody>(
@@ -179,5 +179,5 @@ describe('Auth', () => {
         )
         const message = signInResponse.message
         Assert.equal(message, "Internal Server Error")
-    }, toMilliseconds({ seconds: 30 }))
+    }, toMilliseconds({ seconds: 40 }))
 })

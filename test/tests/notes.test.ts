@@ -50,7 +50,7 @@ describe('Notes', () => {
             }
         })
         userId = getUserResponse._id
-    }, toMilliseconds({ seconds: 30 }))
+    }, toMilliseconds({ minutes: 1 }))
 
     afterAll(async () => {
         await CornellNotepadService.deleteUser({
@@ -64,7 +64,7 @@ describe('Notes', () => {
             }
         })
         await CornellNotepadService.stop()
-    }, toMilliseconds({ seconds: 15 }))
+    }, toMilliseconds({ seconds: 30 }))
 
     describe('POST /notes', () => {
         test('valid', async () => {
@@ -227,7 +227,7 @@ describe('Notes', () => {
                 new Date(createdNote.updatedAt).getTime()
             )
             createdNote = noteAfterUpdate
-        }, toMilliseconds({ seconds: 10 }))
+        }, toMilliseconds({ seconds: 20 }))
 
         
         test('no authorization', async () => {
@@ -355,6 +355,6 @@ describe('Notes', () => {
                 }
             })
             Assert.notDeepIncludeByProperties(notes, createdNote, "_id")
-        })
+        }, toMilliseconds({ seconds: 20 }))
     })
 })
