@@ -11,7 +11,15 @@ const config: Config = {
     "test"
   ],
   restoreMocks: true,
-  testTimeout: 10000
+  testTimeout: 10000,
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100
+    }
+  }
 }
 
 export default config
