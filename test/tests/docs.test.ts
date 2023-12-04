@@ -8,6 +8,7 @@ if (isCliKeyPresent(CliKey.MockDb)) {
 
 import { CornellNotepadService } from "../services/CornellNotepadService"
 import Assert from "../utils/assert"
+import swaggerDocument from "../../build/swagger.json"
 
 describe('Docs', () => {
     beforeAll(() => CornellNotepadService.start())
@@ -17,5 +18,12 @@ describe('Docs', () => {
     test('GET /docs', async () => {
         let response = await CornellNotepadService.getDocs()
         Assert.equal(response.status, 200)
+    })
+
+    test('GET /docs/swagger.json', async () => {
+        let response = await CornellNotepadService.getDocsJson()
+        Assert.equal(response.status, 200)
+        let body = await response.json()
+        Assert.deepEqual(body, swaggerDocument)
     })
 })
