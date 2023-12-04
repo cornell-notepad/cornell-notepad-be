@@ -43,7 +43,7 @@ FROM all-deps as dev
 CMD yarn run dev
 
 ################################################################################
-# Create a stage to run test client.
+# Create a stage to run test client for integration testing.
 FROM all-deps as test
 # Run the build script.
 CMD yarn run test --forceExit --integration=true

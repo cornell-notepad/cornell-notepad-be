@@ -2,12 +2,12 @@ import { join } from "path"
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import {isCliKeyPresent} from "../utils/utils";
 import {CliKey} from "../enums/CliKey";
-import {CornellNotepadService} from "../services/CornellNotepadService";
 
 (async () => {
     let openApiSpec: object
     if (isCliKeyPresent(CliKey.Integration)) {
-        const response = await CornellNotepadService.getDocsJson()
+        const serverUrl = `http://${process.env.SERVER_HOST}:${process.env.SERVER_PORT}/docs/swagger.json`
+        const response = await fetch(serverUrl)
         if (response.status !== 200) {
             throw new Error(`failed to get openapi spec: ${response.statusText}`)
         }
