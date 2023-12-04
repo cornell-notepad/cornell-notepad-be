@@ -31,31 +31,28 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 # Create a stage for installing production dependecies.
 FROM base as all-deps
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.yarn to speed up subsequent builds.
-# Leverage bind mounts to package.json and yarn.lock to avoid having to copy them
-# into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=yarn.lock,target=yarn.lock \
-    --mount=type=cache,target=/root/.yarn \
-    yarn install --frozen-lockfile
+# Copy the rest of the source files into the image.
+COPY . .
+RUN yarn install --frozen-lockfile
 
 ################################################################################
 # Create a stage to run application in development mode.
 FROM all-deps as dev
 
-# Copy the rest of the source files into the image.
-COPY . .
 # Run the build script.
 CMD yarn run dev
+
+################################################################################
+# Create a stage to run test client.
+FROM all-deps as test
+# Run the build script.
+CMD yarn run test --forceExit --integration=true
 
 ################################################################################
 # Create a stage for building the application.
 FROM all-deps as build
 ENV API_SECRET="mySecretKey"
 ENV BEARER_EXPIRES_IN="1h"
-# Copy the rest of the source files into the image.
-COPY . .
 # Run the build script.
 RUN yarn run test --forceExit --mockDB=true
 RUN yarn run build

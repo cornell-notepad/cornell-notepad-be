@@ -135,49 +135,53 @@ describe('Auth', () => {
     })
 
     test("expired authorization token", async () => {
-        const bearerExpiresIn = process.env.BEARER_EXPIRES_IN
-        process.env.BEARER_EXPIRES_IN = "1m"
-        try {
-            const { accessToken } = await CornellNotepadService.signIn({
-                json: {
-                    username,
-                    password
-                }
-            })
-            await sleep(toMilliseconds({ minutes: 1 }))
-            const getUserResponse = await CornellNotepadService.getUser<HTTPErrorBody>(
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
+        if (!isCliKeyPresent(CliKey.Integration)) {
+            const bearerExpiresIn = process.env.BEARER_EXPIRES_IN
+            process.env.BEARER_EXPIRES_IN = "1m"
+            try {
+                const { accessToken } = await CornellNotepadService.signIn({
+                    json: {
+                        username,
+                        password
                     }
-                },
-                401,
-                "HTTPErrorBody"
-            )
-            Assert.equal(getUserResponse.message, "jwt expired")
-        } finally {
-            process.env.BEARER_EXPIRES_IN = bearerExpiresIn
+                })
+                await sleep(toMilliseconds({ minutes: 1 }))
+                const getUserResponse = await CornellNotepadService.getUser<HTTPErrorBody>(
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`
+                        }
+                    },
+                    401,
+                    "HTTPErrorBody"
+                )
+                Assert.equal(getUserResponse.message, "jwt expired")
+            } finally {
+                process.env.BEARER_EXPIRES_IN = bearerExpiresIn
+            }
         }
     }, toMilliseconds({ minutes: 2 }))
 
     test('POST /auth/sign-in (disconnected database)', async () => {
-        if (isCliKeyPresent(CliKey.MockDb)) {
-            jest.spyOn(UserModel, "findOne")
-                .mockImplementation(() => { throw new Error("database not connected") })
-        } else {
-            await mongoose.disconnect()
+        if (!isCliKeyPresent(CliKey.Integration)) {
+            if (isCliKeyPresent(CliKey.MockDb)) {
+                jest.spyOn(UserModel, "findOne")
+                    .mockImplementation(() => { throw new Error("database not connected") })
+            } else {
+                await mongoose.disconnect()
+            }
+            let signInResponse = await CornellNotepadService.signIn<HTTPErrorBody>(
+                {
+                    json: {
+                        username,
+                        password
+                    }
+                },
+                500,
+                "HTTPErrorBody"
+            )
+            const message = signInResponse.message
+            Assert.equal(message, "Internal Server Error")
         }
-        let signInResponse = await CornellNotepadService.signIn<HTTPErrorBody>(
-            {
-                json: {
-                    username,
-                    password
-                }
-            },
-            500,
-            "HTTPErrorBody"
-        )
-        const message = signInResponse.message
-        Assert.equal(message, "Internal Server Error")
     }, toMilliseconds({ seconds: 40 }))
 })
