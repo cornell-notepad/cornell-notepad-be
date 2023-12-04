@@ -6,6 +6,7 @@ import express, {
     NextFunction
 } from "express";
 import { RegisterRoutes } from "../build/routes";
+import swaggerDocument from "../build/swagger.json"
 import swaggerUi from "swagger-ui-express";
 import mongoose from "mongoose";
 import {ValidateError} from "tsoa";
@@ -24,11 +25,13 @@ app.use(
     })
 );
 app.use(json());
-app.use("/docs", swaggerUi.serve, async (_req: Request, res: Response) => {
-    return res.send(
-        swaggerUi.generateHTML(await import("../build/swagger.json"))
-    );
-});
+let swaggerUiOpts = {
+  swaggerOptions: {
+    url: '/docs/swagger.json'
+  }
+}
+app.get(swaggerUiOpts.swaggerOptions.url, (_req, res) => res.json(swaggerDocument));
+app.use('/docs', swaggerUi.serveFiles(undefined, swaggerUiOpts), swaggerUi.setup(undefined, swaggerUiOpts));
 mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/cornell_notepad`, {
     user: process.env.DB_USER,
     pass: process.env.DB_PASSWORD,
