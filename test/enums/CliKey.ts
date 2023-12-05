@@ -1,3 +1,4 @@
 export enum CliKey {
-    MockDb = "--mockDB=true"
+    MockDb = "--mockDB=true",
+    Integration = "--integration=true"
 }

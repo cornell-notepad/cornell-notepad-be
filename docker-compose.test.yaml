@@ -1,0 +1,10 @@
+services:
+  test-client:
+    build:
+      context: .
+      target: test
+    environment:
+      SERVER_HOST: server
+      SERVER_PORT: 3000
+    depends_on:
+      - server
