@@ -51,9 +51,7 @@ export class UserController extends Controller {
     @Security("bearerAuth")
     @Response<HTTPErrorBody>(401, "Unauthorized")
     async delete(@Request() { user }: AuthenticatedRequest) {
-        const userNotes = await NotesService.getUserNotes(user._id)
-        const notesIds = userNotes.map(note => note._id.toString())
-        await NotesService.deleteNotes(notesIds, user._id)
+        await NotesService.deleteAllUserNotes(user._id)
         await UsersService.delete(user._id)
     }
 }

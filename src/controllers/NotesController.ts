@@ -4,16 +4,45 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Respons
 import {HTTPError} from "fets";
 import {AuthenticatedRequest} from "../types/AuthenticatedRequest";
 import {HTTPErrorBody} from "../types/errors/HTTPErrorBody";
+import {SortBy} from "../enums/SortBy";
+import {Order} from "../enums/Order";
 
 @Route("notes")
 @Tags("Notes")
 export class NotesController extends Controller {
+    /**
+     * @isInt skip
+     * @minimum skip 0
+     * @isInt limit
+     * @minimum limit 1
+     * @maximum limit 100
+     */
     @Get()
     @Security("bearerAuth")
     @Response<HTTPErrorBody>(401, "Unauthorized")
-    async getAll(@Request() { user }: AuthenticatedRequest): Promise<NoteCreated[]> {
-        let notes = await NotesService.getUserNotes(user._id)
-        return notes
+    async getAll(
+        @Query() sortBy: SortBy,
+        @Query() order: Order,
+        @Query() skip: number,
+        @Query() limit: number,
+        @Request() { user }: AuthenticatedRequest
+    ): Promise<{
+        /**
+         * @isInt
+         */
+        skipped: number
+        /**
+         * @isInt
+         */
+        total: number
+        notes: NoteCreated[]
+    }> {
+        let { total, notes } = await NotesService.getUserNotes(user._id, sortBy, order, skip, limit)
+        return {
+            skipped: skip,
+            total,
+            notes
+        }
     }
 
     @Get("{_id}")
