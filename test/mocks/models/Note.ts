@@ -42,7 +42,10 @@ export class NoteModel extends NoteCreated {
     }
 
     static find(filter: any) {
-        let foundNotes = mingo.find<NoteCreated>(notes, filter).all()
+        let foundNotes = mingo.find<NoteCreated>(notes, filter)
+        Object.defineProperty(foundNotes, 'countDocuments', {
+            value: () => foundNotes.count()
+        })
         return foundNotes
     }
 

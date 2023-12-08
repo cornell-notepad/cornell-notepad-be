@@ -200,11 +200,18 @@ describe("Users", () => {
             )
             Assert.equal(getUserResponse.message, "User not found")
             const getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
                 headers: {
                     Authorization
                 }
             })
-            Assert.isEmpty(getNotesResponse)
+            Assert.isEmpty(getNotesResponse.notes)
+            Assert.equal(getNotesResponse.total, 0)
             let signInResponse = await CornellNotepadService.signIn<HTTPErrorBody>(
                 {
                     json: {

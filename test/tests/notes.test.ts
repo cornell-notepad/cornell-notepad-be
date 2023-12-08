@@ -6,16 +6,17 @@ if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
-import { HTTPErrorBody, NoteCreated, UserNew } from "../types/cornellNotepadService/types"
+import { HTTPErrorBody, NoteCreated, UserNew, ValidateErrorBody } from "../types/cornellNotepadService/types"
 import { CornellNotepadService } from "../services/CornellNotepadService"
 import Assert from "../utils/assert"
 import {getRandomNote, getRandomUser} from "../utils/fakerUtils"
 import toMilliseconds from "@sindresorhus/to-milliseconds"
 import {faker} from "@faker-js/faker"
+import {NoteNew} from "../mocks/models/Note"
 
 describe('Notes', () => {
     const newNote = getRandomNote()
-    let createdNote: NoteCreated
+    const createdNotes: NoteCreated[] = []
     let userId: string
     const user: UserNew = getRandomUser()
     const anotherUser = getRandomUser()
@@ -77,7 +78,8 @@ describe('Notes', () => {
                 }
             })
             Assert.lengthOf(responseWithCreatedNotes, 1)
-            createdNote = responseWithCreatedNotes[0]
+            const createdNote = responseWithCreatedNotes[0]
+            createdNotes.push(createdNote)
             Assert.isNotEmpty(createdNote._id)
             let { _id, __v, createdAt, updatedAt, user, ...createdNoteData } = createdNote
             Assert.deepEqual(createdNoteData, newNote)
@@ -103,20 +105,74 @@ describe('Notes', () => {
     })
 
     describe('GET /notes', () => {
-        test('valid', async () => {
+
+        beforeAll(async () => {
+            const sampleNotes: NoteNew[] = []
+            for (let i = 0; i < 5; i++) {
+                sampleNotes.push(getRandomNote())
+            }
+            for (let note of sampleNotes) {
+                const postNotesResponse = await CornellNotepadService.postNotes({
+                    headers: {
+                        Authorization: userAuthorization
+                    },
+                    json: [note]
+                })
+                const createdNote = postNotesResponse[0]
+                createdNotes.push(createdNote)
+            }
+            for (let i = 0; i < createdNotes.length; i++) {
+                const createdNote = faker.helpers.arrayElement(createdNotes)
+                const noteUpdate = getRandomNote()
+                await CornellNotepadService.putNote({
+                    headers: {
+                        Authorization: userAuthorization
+                    },
+                    params: {
+                        _id: createdNote._id
+                    },
+                    json: noteUpdate
+                })
+                const updatedNote = await CornellNotepadService.getNote({
+                    headers: {
+                        Authorization: userAuthorization
+                    },
+                    params: {
+                        _id: createdNote._id
+                    }
+                })
+                const indexOfNote = createdNotes.findIndex(note => createdNote._id === note._id)
+                createdNotes.splice(indexOfNote, 1, updatedNote)
+            }
+        }, toMilliseconds({ seconds: 150 }))
+
+        test('all', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
-            let notes = await CornellNotepadService.getNotes({
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
                 headers: {
                     Authorization: userAuthorization
                 }
             })
-            Assert.deepInclude(notes, createdNote)
+            Assert.deepEqual(getNotesResponse.notes, createdNotes)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
         })
 
         test('no authorization', async () => {
-            if (!createdNote) Assert.fail(`note was not created`)
             let response = await CornellNotepadService.getNotes<HTTPErrorBody>(
                 {
+                    query: {
+                        limit: 100,
+                        order: 'asc',
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
                     headers: {
                         // @ts-expect-error
                         Authorization: undefined
@@ -127,10 +183,427 @@ describe('Notes', () => {
             )
             Assert.equal(response.message, "No token provided")
         })
+
+        test('valid limit', async () => {
+            const createdNote = createdNotes[0]
+            if (!createdNote) Assert.fail(`note was not created`)
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 1,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            const [first, second] = createdNotes
+            Assert.deepEqual(getNotesResponse.notes, [first])
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 2,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.deepEqual(getNotesResponse.notes, [first, second])
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: createdNotes.length,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.deepEqual(getNotesResponse.notes, createdNotes)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.deepEqual(getNotesResponse.notes, createdNotes)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+        }, toMilliseconds({ seconds: 40 }))
+
+        test('invalid limit', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    query: {
+                        limit: 0,
+                        order: 'asc',
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    limit: {
+                        message: "min 1",
+                        value: "0"
+                    }
+                }
+            })
+            getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    query: {
+                        limit: 101,
+                        order: 'asc',
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    limit: {
+                        message: "max 100",
+                        value: "101"
+                    }
+                }
+            })
+            getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    // @ts-expect-error
+                    query: {
+                        order: 'asc',
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    limit: {
+                        message: "limit"
+                    }
+                }
+            })
+        }, toMilliseconds({ seconds: 30 }))
+
+        test('valid skip', async () => {
+            const createdNote = createdNotes[0]
+            if (!createdNote) Assert.fail(`note was not created`)
+            let skip = 0
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            const [_first, ...rest] = createdNotes
+            Assert.deepEqual(getNotesResponse.notes, createdNotes)
+            Assert.equal(getNotesResponse.skipped, skip)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            skip = 1
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.deepEqual(getNotesResponse.notes, rest)
+            Assert.equal(getNotesResponse.skipped, skip)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            skip = createdNotes.length - 1
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: createdNotes.length,
+                    order: 'asc',
+                    skip,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.deepEqual(getNotesResponse.notes, [createdNotes[createdNotes.length - 1]])
+            Assert.equal(getNotesResponse.skipped, skip)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+            skip = createdNotes.length
+            getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.isEmpty(getNotesResponse.notes)
+            Assert.equal(getNotesResponse.skipped, skip)
+            Assert.equal(getNotesResponse.total, createdNotes.length)
+        }, toMilliseconds({ seconds: 40 }))
+
+        test('invalid skip', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    query: {
+                        limit: 100,
+                        order: 'asc',
+                        skip: -1,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    skip: {
+                        message: "min 0",
+                        value: "-1"
+                    }
+                }
+            })
+            getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    // @ts-expect-error
+                    query: {
+                        limit: 100,
+                        order: 'asc',
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    skip: {
+                        message: "skip"
+                    }
+                }
+            })
+        }, toMilliseconds({ seconds: 20 }))
+
+        test('ascending order', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.sameDeepMembers(getNotesResponse.notes, createdNotes)
+            Assert.sortedBy(getNotesResponse.notes, 'createdAt')
+        })
+
+        test('descending order', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'desc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.sameDeepMembers(getNotesResponse.notes, createdNotes)
+            Assert.sortedBy(getNotesResponse.notes, 'createdAt', true)
+        })
+
+        test('invalid order', async () => {
+            const order = faker.string.alphanumeric({ length: { min: 1, max: 5 }})
+            let getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    query: {
+                        limit: 100,
+                        // @ts-expect-error
+                        order,
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    order: {
+                        message: "should be one of the following; ['desc','asc']",
+                        value: order
+                    }
+                }
+            })
+            getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    // @ts-expect-error
+                    query: {
+                        limit: 100,
+                        skip: 0,
+                        sortBy: 'createdAt'
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    order: {
+                        message: "'order' is required"
+                    }
+                }
+            })
+        }, toMilliseconds({ seconds: 20 }))
+
+        test('sort by createdAt', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.sameDeepMembers(getNotesResponse.notes, createdNotes)
+            Assert.sortedBy(getNotesResponse.notes, 'createdAt')
+        })
+
+        test('sort by updatedAt', async () => {
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'updatedAt'
+                },
+                headers: {
+                    Authorization: userAuthorization
+                }
+            })
+            Assert.sameDeepMembers(getNotesResponse.notes, createdNotes)
+            Assert.sortedBy(getNotesResponse.notes, 'updatedAt')
+        })
+
+        test('invalid sortBy', async () => {
+            const sortBy = faker.string.alphanumeric({ length: { min: 1, max: 5 }})
+            let getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    query: {
+                        limit: 100,
+                        order: 'asc',
+                        skip: 0,
+                        // @ts-expect-error
+                        sortBy
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    sortBy: {
+                        message: "should be one of the following; ['createdAt','updatedAt']",
+                        value: sortBy
+                    }
+                }
+            })
+            getNotesResponse = await CornellNotepadService.getNotes<ValidateErrorBody>(
+                {
+                    // @ts-expect-error
+                    query: {
+                        limit: 100,
+                        order: 'asc',
+                        skip: 0,
+                    },
+                    headers: {
+                        Authorization: userAuthorization
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.deepEqual(getNotesResponse, {
+                message: "Validate Error",
+                fields: {
+                    sortBy: {
+                        message: "'sortBy' is required",
+                    }
+                }
+            })
+        }, toMilliseconds({ seconds: 20 }))
     })
 
     describe('GET /notes/_id', () => {
         test('valid', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let note = await CornellNotepadService.getNote({
                 params: {
@@ -161,6 +634,7 @@ describe('Notes', () => {
         })
 
         test('no authorization', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let response = await CornellNotepadService.getNote<HTTPErrorBody>(
                 {
@@ -179,6 +653,7 @@ describe('Notes', () => {
         })
 
         test('no access', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let note = await CornellNotepadService.getNote<HTTPErrorBody>(
                 {
@@ -198,6 +673,7 @@ describe('Notes', () => {
 
     describe('PUT /notes/_id', () => {
         test('valid', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let updatedNote = getRandomNote()
             await CornellNotepadService.putNote({
@@ -226,11 +702,13 @@ describe('Notes', () => {
                 new Date(noteAfterUpdate.updatedAt).getTime(),
                 new Date(createdNote.updatedAt).getTime()
             )
-            createdNote = noteAfterUpdate
+            createdNotes.shift()
+            createdNotes.unshift(noteAfterUpdate)
         }, toMilliseconds({ seconds: 20 }))
 
         
         test('no authorization', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let updatedNote = getRandomNote()
             let response = await CornellNotepadService.putNote<HTTPErrorBody>(
@@ -251,6 +729,7 @@ describe('Notes', () => {
         })
 
         test('no access', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let updatedNote = getRandomNote()
             let response = await CornellNotepadService.putNote<HTTPErrorBody>(
@@ -272,6 +751,7 @@ describe('Notes', () => {
 
     describe('DELETE /notes/_id', () => {
         test('not existing', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             const randomId = faker.database.mongodbObjectId()
             let response = await CornellNotepadService.deleteNotes<HTTPErrorBody>(
@@ -296,6 +776,7 @@ describe('Notes', () => {
         })
 
         test('no access', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let response = await CornellNotepadService.deleteNotes<HTTPErrorBody>(
                 {
@@ -318,6 +799,7 @@ describe('Notes', () => {
         })
 
         test('no authorization', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             let response = await CornellNotepadService.deleteNotes<HTTPErrorBody>(
                 {
@@ -338,6 +820,7 @@ describe('Notes', () => {
         })
 
         test('valid', async () => {
+            const createdNote = createdNotes[0]
             if (!createdNote) Assert.fail(`note was not created`)
             await CornellNotepadService.deleteNotes({
                 query: {
@@ -349,12 +832,18 @@ describe('Notes', () => {
                     Authorization: userAuthorization
                 }
             })
-            let notes = await CornellNotepadService.getNotes({
+            let getNotesResponse = await CornellNotepadService.getNotes({
+                query: {
+                    limit: 100,
+                    order: 'asc',
+                    skip: 0,
+                    sortBy: 'createdAt'
+                },
                 headers: {
                     Authorization: userAuthorization
                 }
             })
-            Assert.notDeepIncludeByProperties(notes, createdNote, "_id")
+            Assert.notDeepIncludeByProperties(getNotesResponse.notes, createdNote, "_id")
         }, toMilliseconds({ seconds: 20 }))
     })
 })
