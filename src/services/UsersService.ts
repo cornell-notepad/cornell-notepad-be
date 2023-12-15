@@ -27,12 +27,12 @@ export class UsersService {
     }
 
     private static hashPwd(pwd: string) {
-        return bcrypt.hashSync(pwd, 8)
+        return bcrypt.hash(pwd, 8)
     }
 
     static async create(user: UserNew): Promise<void> {
         this.validatePwd(user.password)
-        const password = this.hashPwd(user.password)
+        const password = await this.hashPwd(user.password)
         let userModel = new UserModel({
             ...user,
             password
@@ -66,7 +66,7 @@ export class UsersService {
 
     static async updateUserPassword(userId: string, newPassword: string) {
         this.validatePwd(newPassword)
-        const password = this.hashPwd(newPassword)
+        const password = await this.hashPwd(newPassword)
         await UserModel.findByIdAndUpdate(userId, { password })
     }
 
