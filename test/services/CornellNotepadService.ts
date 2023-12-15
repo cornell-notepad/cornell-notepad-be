@@ -86,8 +86,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-expect-error
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 
@@ -119,8 +118,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-expect-error
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 
@@ -148,8 +146,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-ignore
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 
@@ -181,8 +178,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-expect-error
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 
@@ -214,8 +210,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-expect-error
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 
@@ -233,8 +228,7 @@ export class CornellNotepadService {
                 expectedResponseTypeName
             ) as ExpectedResponse
         } else {
-            // @ts-expect-error
-            return
+            return Promise.resolve() as ExpectedResponse
         }
     }
 }
