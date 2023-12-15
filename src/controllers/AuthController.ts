@@ -12,6 +12,7 @@ import {ValidateErrorBody} from "../types/errors/ValidateErrorBody";
 @Tags("Auth")
 export class AuthController extends Controller {
     @Post("sign-up")
+    @Response<ValidateErrorBody>(422, "Unprocessable Content")
     async signUp(@Body() user: UserNew) {
         await UsersService.create(user)
     }
