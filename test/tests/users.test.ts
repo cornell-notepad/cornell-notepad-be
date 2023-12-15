@@ -9,8 +9,8 @@ if (isCliKeyPresent(CliKey.MockDb)) {
 import {faker} from "@faker-js/faker"
 import {CornellNotepadService} from "../services/CornellNotepadService"
 import Assert from "../utils/assert"
-import {getRandomNote, getRandomUser} from "../utils/fakerUtils"
-import {HTTPErrorBody} from "../types/cornellNotepadService/types"
+import {generateUserPassword, getRandomNote, getRandomUser} from "../utils/fakerUtils"
+import {HTTPErrorBody, ValidateErrorBody} from "../types/cornellNotepadService/types"
 import toMilliseconds from "@sindresorhus/to-milliseconds"
 
 describe("Users", () => {
@@ -108,7 +108,7 @@ describe("Users", () => {
 
     describe("PUT /user/password", () => {
         test("valid", async () => {
-            const newPassword = faker.internet.password()
+            const newPassword = generateUserPassword()
             await CornellNotepadService.putUserPassword({
                 headers: {
                     Authorization
@@ -138,7 +138,7 @@ describe("Users", () => {
     
         test("wrong current password", async () => {
             const wrongCurrentPassword = faker.internet.password()
-            const newPassword = faker.internet.password()
+            const newPassword = generateUserPassword()
             const { message } = await CornellNotepadService.putUserPassword<HTTPErrorBody>(
                 {
                     headers: {
@@ -156,7 +156,7 @@ describe("Users", () => {
         })
     
         test("no authorization", async () => {
-            const newPassword = faker.internet.password()
+            const newPassword = generateUserPassword()
             const { message } = await CornellNotepadService.putUserPassword<HTTPErrorBody>(
                 {
                     headers: {
@@ -172,6 +172,57 @@ describe("Users", () => {
                 "HTTPErrorBody"
             )
             Assert.equal(message, "No token provided")
+        })
+
+        test("invalid new password", async () => {
+            const response = await CornellNotepadService.putUserPassword<ValidateErrorBody>(
+                {
+                    headers: {
+                        Authorization
+                    },
+                    json: {
+                        currentPassword: user.password,
+                        newPassword: ' '
+                    }
+                },
+                422,
+                "ValidateErrorBody"
+            )
+            Assert.equal(response.message, "Invalid password")
+            if ('password' in response.fields) {
+                const password: any = response.fields.password
+                Assert.equal(password.message, "Invalid password")
+                Assert.sameDeepMembers(password.value, [
+                    {
+                        validation: "min",
+                        arguments: 8,
+                        message: "The string should have a minimum length of 8 characters"
+                    },
+                    {
+                        validation: "lowercase",
+                        message: "The string should have a minimum of 1 lowercase letter"
+                    },
+                    {
+                        validation: "uppercase",
+                        message: "The string should have a minimum of 1 uppercase letter"
+                    },
+                    {
+                        validation: "digits",
+                        message: "The string should have a minimum of 1 digit"
+                    },
+                    {
+                        validation: "symbols",
+                        message: "The string should have a minimum of 1 symbol"
+                    },
+                    {
+                        validation: "spaces",
+                        inverted: true,
+                        message: "The string should not have spaces"
+                    }
+                ])
+            } else {
+                Assert.fail('password field is not present in response fields')
+            }
         })
     })
 
