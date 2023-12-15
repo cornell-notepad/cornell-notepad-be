@@ -40,13 +40,13 @@ export class UsersService {
         await userModel.save()
     }
 
-    static async getByUsername(username: string): Promise<UserCreated> {
+    static async getByUsername(username: string): Promise<UserCreated | null> {
         let foundUser = await UserModel.findOne({ username })
-        if (!foundUser) {
-            throw new NotFoundError("User not found")
-        } else {
+        if (foundUser) {
             const userObject = foundUser.toObject()
             return userObject
+        } else {
+            return foundUser
         }
     }
 
