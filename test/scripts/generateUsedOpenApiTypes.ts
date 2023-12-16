@@ -2,11 +2,12 @@ import { join } from "path"
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import {isCliKeyPresent} from "../utils/utils";
 import {CliKey} from "../enums/CliKey";
+import {SERVER_HOST, SERVER_PORT} from "../consts/FromEnvVars";
 
 (async () => {
     let openApiSpec: object
     if (isCliKeyPresent(CliKey.Integration)) {
-        const serverUrl = `http://${process.env.SERVER_HOST}:${process.env.SERVER_PORT}/docs/swagger.json`
+        const serverUrl = `http://${SERVER_HOST}:${SERVER_PORT}/docs/swagger.json`
         const response = await fetch(serverUrl)
         if (response.status !== 200) {
             throw new Error(`failed to get openapi spec: ${response.statusText}`)

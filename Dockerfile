@@ -51,8 +51,14 @@ CMD yarn run test --forceExit --integration=true
 ################################################################################
 # Create a stage for building the application.
 FROM all-deps as build
+
 ENV API_SECRET="mySecretKey"
 ENV BEARER_EXPIRES_IN="1h"
+ENV DB_HOST="mongo"
+ENV DB_PORT="27017"
+ENV DB_USER="root"
+ENV DB_PASSWORD="example"
+
 # Run the build script.
 RUN yarn run test --forceExit --mockDB=true
 RUN yarn run build

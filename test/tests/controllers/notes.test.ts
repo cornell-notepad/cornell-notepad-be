@@ -1,18 +1,18 @@
-import {isCliKeyPresent} from "../utils/utils"
-import {CliKey} from "../enums/CliKey"
-import {mockDB} from "../utils/mockUtils"
+import {isCliKeyPresent} from "../../utils/utils"
+import {CliKey} from "../../enums/CliKey"
+import {mockDB} from "../../utils/mockUtils"
 
 if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
-import { HTTPErrorBody, NoteCreated, UserNew, ValidateErrorBody } from "../types/cornellNotepadService/types"
-import { CornellNotepadService } from "../services/CornellNotepadService"
-import Assert from "../utils/assert"
-import {getRandomNote, getRandomUser} from "../utils/fakerUtils"
+import { HTTPErrorBody, NoteCreated, UserNew, ValidateErrorBody } from "../../types/cornellNotepadService/types"
+import { CornellNotepadService } from "../../services/CornellNotepadService"
+import Assert from "../../utils/assert"
+import {getRandomNote, getRandomUser} from "../../utils/fakerUtils"
 import toMilliseconds from "@sindresorhus/to-milliseconds"
 import {faker} from "@faker-js/faker"
-import {NoteNew} from "../mocks/models/Note"
+import {NoteNew} from "../../mocks/models/Note"
 
 describe('Notes', () => {
     const newNote = getRandomNote()

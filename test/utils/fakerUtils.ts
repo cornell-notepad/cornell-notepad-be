@@ -1,5 +1,30 @@
 import {faker} from "@faker-js/faker";
 import {NoteNew, UserNew} from "../types/cornellNotepadService/types";
+import {shuffle} from "lodash"
+
+export function generateUserPassword(): string {
+    const length = {
+        min: 2,
+        max: 4
+    }
+    const lowercase = faker.string.alpha({
+        length,
+        casing: 'lower'
+    })
+    const uppercase = faker.string.alpha({
+        length,
+        casing: 'upper'
+    })
+    const digits = faker.string.numeric({ length })
+    const symbol = faker.string.symbol(length)
+    const password = shuffle([
+        lowercase,
+        uppercase,
+        digits,
+        symbol
+    ]).join('')
+    return password
+}
 
 export function getRandomUser(): UserNew {
     const firstName = faker.person.firstName()
@@ -8,7 +33,7 @@ export function getRandomUser(): UserNew {
         firstName,
         lastName
     })
-    const password = faker.internet.password()
+    const password = generateUserPassword()
     return {
         firstName,
         lastName,

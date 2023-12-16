@@ -1,23 +1,52 @@
+import PasswordValidator from "password-validator";
 import {NotFoundError} from "../errors/NotFoundError";
 import {UserBase, UserCreated, UserNew, UserModel} from "../models/User";
 import bcrypt from "bcrypt"
+import {ValidateError} from "tsoa";
 
 export class UsersService {
+    private static pwdValidator = new PasswordValidator()
+        .is().min(8)
+        .is().max(100)
+        .has().lowercase()
+        .has().uppercase()
+        .has().digits()
+        .has().symbols()
+        .has().not().spaces()
+    
+    private static validatePwd(pwd: string) {
+        const validationResults = this.pwdValidator.validate(pwd, { details: true }) as any[]
+        if (validationResults.length > 0) {
+            throw new ValidateError({
+                password: {
+                    message: 'Invalid password',
+                    value: validationResults
+                }
+            }, 'Invalid password')
+        }
+    }
+
+    private static hashPwd(pwd: string) {
+        return bcrypt.hash(pwd, 8)
+    }
+
     static async create(user: UserNew): Promise<void> {
+        this.validatePwd(user.password)
+        const password = await this.hashPwd(user.password)
         let userModel = new UserModel({
             ...user,
-            password: bcrypt.hashSync(user.password, 8)
+            password
         })
         await userModel.save()
     }
 
-    static async getByUsername(username: string): Promise<UserCreated> {
+    static async getByUsername(username: string): Promise<UserCreated | null> {
         let foundUser = await UserModel.findOne({ username })
-        if (!foundUser) {
-            throw new NotFoundError("User not found")
-        } else {
+        if (foundUser) {
             const userObject = foundUser.toObject()
             return userObject
+        } else {
+            return foundUser
         }
     }
 
@@ -36,9 +65,9 @@ export class UsersService {
     }
 
     static async updateUserPassword(userId: string, newPassword: string) {
-        await UserModel.findByIdAndUpdate(userId, {
-            password: bcrypt.hashSync(newPassword, 8)
-        })
+        this.validatePwd(newPassword)
+        const password = await this.hashPwd(newPassword)
+        await UserModel.findByIdAndUpdate(userId, { password })
     }
 
     static async delete(userId: string) {
