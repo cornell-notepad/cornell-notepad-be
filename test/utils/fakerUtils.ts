@@ -22,7 +22,7 @@ export function generateUserPassword(): string {
         uppercase,
         digits,
         symbol
-    ]).join()
+    ]).join('')
     return password
 }
 
