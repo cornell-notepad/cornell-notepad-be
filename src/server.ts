@@ -1,7 +1,6 @@
 import { app } from "./app";
+import {PORT} from "./consts/FromEnvVars";
 
-const port = process.env.PORT || 3000;
-
-app.listen(port, () =>
-    console.info(`App is running! Check swagger at http://localhost:${port}/docs`)
+app.listen(PORT, () =>
+    console.info(`App is running! Check swagger at http://localhost:${PORT}/docs`)
 );

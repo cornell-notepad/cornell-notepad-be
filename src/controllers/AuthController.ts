@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import {PostSignInRequestBody} from "../types/authController/PostSignInRequestBody";
 import {HTTPErrorBody} from "../types/errors/HTTPErrorBody";
 import {ValidateErrorBody} from "../types/errors/ValidateErrorBody";
+import {API_SECRET, BEARER_EXPIRES_IN} from "../consts/FromEnvVars";
 
 @Route("auth")
 @Tags("Auth")
@@ -34,8 +35,8 @@ export class AuthController extends Controller {
         }
         let accessToken: string = jwt.sign(
             { _id: foundUser._id },
-            process.env.API_SECRET!,
-            { expiresIn: process.env.BEARER_EXPIRES_IN }
+            API_SECRET,
+            { expiresIn: BEARER_EXPIRES_IN }
         )
         return {
             accessToken

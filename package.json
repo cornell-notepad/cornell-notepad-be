@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@typegoose/typegoose": "^11.7.1",
+    "@vitaliystorchous/require-env-var": "^1.0.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

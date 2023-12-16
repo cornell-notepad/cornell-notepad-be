@@ -1,14 +1,14 @@
-import {isCliKeyPresent} from "../utils/utils"
-import {CliKey} from "../enums/CliKey"
-import {mockDB} from "../utils/mockUtils"
+import {isCliKeyPresent} from "../../utils/utils"
+import {CliKey} from "../../enums/CliKey"
+import {mockDB} from "../../utils/mockUtils"
 
 if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
-import { CornellNotepadService } from "../services/CornellNotepadService"
-import Assert from "../utils/assert"
-import swaggerDocument from "../../build/swagger.json"
+import { CornellNotepadService } from "../../services/CornellNotepadService"
+import Assert from "../../utils/assert"
+import swaggerDocument from "../../../build/swagger.json"
 
 describe('Docs', () => {
     beforeAll(() => CornellNotepadService.start())

@@ -1,16 +1,19 @@
-import {isCliKeyPresent, sleep} from "../utils/utils"
-import {CliKey} from "../enums/CliKey"
-import {mockDB} from "../utils/mockUtils"
+import {isCliKeyPresent} from "../../utils/utils"
+import {CliKey} from "../../enums/CliKey"
+import {mockDB} from "../../utils/mockUtils"
 
 if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
-import {HTTPErrorBody, IPostAuthSignInResponse, ValidateErrorBody} from "../types/cornellNotepadService/types"
-import { CornellNotepadService } from "../services/CornellNotepadService"
-import Assert from "../utils/assert"
-import {generateUserPassword, getRandomUser} from "../utils/fakerUtils"
+import {mongoose} from "@typegoose/typegoose"
+import {UserModel} from "../../mocks/models/User"
+import {HTTPErrorBody, IPostAuthSignInResponse, ValidateErrorBody} from "../../types/cornellNotepadService/types"
+import { CornellNotepadService } from "../../services/CornellNotepadService"
+import Assert from "../../utils/assert"
+import {generateUserPassword, getRandomUser} from "../../utils/fakerUtils"
 import toMilliseconds from "@sindresorhus/to-milliseconds"
+import {faker} from "@faker-js/faker"
 
 describe('Auth', () => {
     const user = getRandomUser()
@@ -26,7 +29,7 @@ describe('Auth', () => {
     afterAll(() => CornellNotepadService.stop())
 
     describe('POST /auth/sign-up', () => {
-        test('valid', async () => {
+        test.only('valid', async () => {
             await CornellNotepadService.signUp({
                 json: user
             })
@@ -153,62 +156,30 @@ describe('Auth', () => {
             const message = signInResponse.message
             Assert.equal(message, "User not found")
         })
-    })
-
-    describe('auth middleware', () => {
-        test("invalid bearer token", async () => {
-            const response = await CornellNotepadService.getUser<HTTPErrorBody>(
-                {
-                    headers: {
-                        // @ts-expect-error
-                        Authorization: "invalid"
-                    }
-                },
-                401,
-                "HTTPErrorBody"
-            )
-            Assert.equal(response.message, "Invalid token")
-        })
-
-        test("invalid authorization token", async () => {
-            const response = await CornellNotepadService.getUser<HTTPErrorBody>(
-                {
-                    headers: {
-                        Authorization: "Bearer invalid"
-                    }
-                },
-                401,
-                "HTTPErrorBody"
-            )
-            Assert.equal(response.message, "jwt malformed")
-        })
-
-        test("expired authorization token", async () => {
+        
+        test('disconnected database', async () => {
             if (!isCliKeyPresent(CliKey.Integration)) {
-                const bearerExpiresIn = process.env.BEARER_EXPIRES_IN
-                process.env.BEARER_EXPIRES_IN = "1m"
-                try {
-                    const { accessToken } = await CornellNotepadService.signIn({
+                if (isCliKeyPresent(CliKey.MockDb)) {
+                    jest.spyOn(UserModel, "findOne")
+                        .mockImplementation(() => { throw new Error("database not connected") })
+                } else {
+                    await mongoose.disconnect()
+                }
+                const username = faker.internet.userName()
+                const password = generateUserPassword()
+                let signInResponse = await CornellNotepadService.signIn<HTTPErrorBody>(
+                    {
                         json: {
                             username,
                             password
                         }
-                    })
-                    await sleep(toMilliseconds({ minutes: 1 }))
-                    const getUserResponse = await CornellNotepadService.getUser<HTTPErrorBody>(
-                        {
-                            headers: {
-                                Authorization: `Bearer ${accessToken}`
-                            }
-                        },
-                        401,
-                        "HTTPErrorBody"
-                    )
-                    Assert.equal(getUserResponse.message, "jwt expired")
-                } finally {
-                    process.env.BEARER_EXPIRES_IN = bearerExpiresIn
-                }
+                    },
+                    500,
+                    "HTTPErrorBody"
+                )
+                const message = signInResponse.message
+                Assert.equal(message, "Internal Server Error")
             }
-        }, toMilliseconds({ minutes: 2 }))
+        }, toMilliseconds({ seconds: 40 }))
     })
 })

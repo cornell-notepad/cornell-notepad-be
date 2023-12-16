@@ -1,16 +1,16 @@
-import {CliKey} from "../enums/CliKey"
-import {isCliKeyPresent} from "../utils/utils"
-import {mockDB} from "../utils/mockUtils"
+import {CliKey} from "../../enums/CliKey"
+import {isCliKeyPresent} from "../../utils/utils"
+import {mockDB} from "../../utils/mockUtils"
 
 if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
 import {faker} from "@faker-js/faker"
-import {CornellNotepadService} from "../services/CornellNotepadService"
-import Assert from "../utils/assert"
-import {generateUserPassword, getRandomNote, getRandomUser} from "../utils/fakerUtils"
-import {HTTPErrorBody, ValidateErrorBody} from "../types/cornellNotepadService/types"
+import {CornellNotepadService} from "../../services/CornellNotepadService"
+import Assert from "../../utils/assert"
+import {generateUserPassword, getRandomNote, getRandomUser} from "../../utils/fakerUtils"
+import {HTTPErrorBody, ValidateErrorBody} from "../../types/cornellNotepadService/types"
 import toMilliseconds from "@sindresorhus/to-milliseconds"
 
 describe("Users", () => {

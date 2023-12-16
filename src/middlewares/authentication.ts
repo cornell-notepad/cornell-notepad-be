@@ -1,6 +1,7 @@
 import * as express from "express";
 import {HTTPError} from "fets";
 import * as jwt from "jsonwebtoken";
+import {API_SECRET} from "../consts/FromEnvVars";
 
 export async function expressAuthentication(
   request: express.Request,
@@ -14,7 +15,7 @@ export async function expressAuthentication(
     throw new HTTPError(401, "Invalid token")
   } else {
     const token = authorizationHeader.split(" ")[1]
-    let decoded = jwt.verify(token, process.env.API_SECRET!)
+    let decoded = jwt.verify(token, API_SECRET)
     return decoded
   }
 }

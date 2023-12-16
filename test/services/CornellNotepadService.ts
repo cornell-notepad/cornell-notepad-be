@@ -8,12 +8,11 @@ import Assert from "../utils/assert";
 import {isCliKeyPresent} from "../utils/utils";
 import {CliKey} from "../enums/CliKey";
 import {Server} from "http";
+import {SERVER_HOST, SERVER_PORT} from "../consts/FromEnvVars";
 
 export class CornellNotepadService {
     private static server?: Server
-    private static serverHost = process.env.SERVER_HOST || '127.0.0.1'
-    private static serverPort = process.env.SERVER_PORT || 3000
-    private static endpoint = `http://${this.serverHost}:${this.serverPort}`
+    private static endpoint = `http://${SERVER_HOST}:${SERVER_PORT}`
     private static client = createClient<NormalizeOAS<typeof openapi>>({
         endpoint: this.endpoint as never,
     })

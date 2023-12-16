@@ -968,6 +968,11 @@
   dependencies:
     "@types/yargs-parser" "*"
 
+"@vitaliystorchous/require-env-var@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@vitaliystorchous/require-env-var/-/require-env-var-1.0.0.tgz#2cd3b18a529d4b9a72f5368cd2f16838459a1759"
+  integrity sha512-vRE1v0sm0ZgwLlG8RMO1kfUAU7I6tqJ9aQ8IL73rOunBzSQgJen/WldqebgSyVYvIDXfGgkb1BTbfJW00aPXJw==
+
 "@whatwg-node/cookie-store@^0.2.0":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@whatwg-node/cookie-store/-/cookie-store-0.2.2.tgz#cc9e932a4775a5d2f94093522a20789cafbfe7c6"

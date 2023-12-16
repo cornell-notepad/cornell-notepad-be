@@ -15,6 +15,7 @@ import "dotenv/config"
 import {NotFoundError} from "./errors/NotFoundError";
 import * as jwt from "jsonwebtoken";
 import {logger} from "./utils/logger";
+import {DB_HOST, DB_PASSWORD, DB_PORT, DB_USER} from "./consts/FromEnvVars";
 
 export const app = express();
 
@@ -32,9 +33,9 @@ let swaggerUiOpts = {
 }
 app.get(swaggerUiOpts.swaggerOptions.url, (_req, res) => res.json(swaggerDocument));
 app.use('/docs', swaggerUi.serveFiles(undefined, swaggerUiOpts), swaggerUi.setup(undefined, swaggerUiOpts));
-mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/cornell_notepad`, {
-    user: process.env.DB_USER,
-    pass: process.env.DB_PASSWORD,
+mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/cornell_notepad`, {
+    user: DB_USER,
+    pass: DB_PASSWORD,
     authSource: "admin"
 })
 
