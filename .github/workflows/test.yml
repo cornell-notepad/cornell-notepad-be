@@ -2,10 +2,11 @@ name: Test
 
 on:
   pull_request:
+    branches: [ main ]
+  merge_group:
 
 jobs:
   test:
-    if: github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
