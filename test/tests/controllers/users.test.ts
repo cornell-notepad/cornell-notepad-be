@@ -270,10 +270,10 @@ describe("Users", () => {
                         password: user.password
                     }
                 },
-                404,
+                401,
                 "HTTPErrorBody"
             )
-            Assert.equal(signInResponse.message, "User not found")
+            Assert.equal(signInResponse.message, "Unauthorized")
         }, toMilliseconds({ seconds: 50 }))
 
         test("no authorization", async () => {

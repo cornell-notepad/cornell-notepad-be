@@ -6,8 +6,8 @@ if (isCliKeyPresent(CliKey.MockDb)) {
     mockDB()
 }
 
-jest.mock('../../src/consts/FromEnvVars', () => ({
-    ...jest.requireActual('../../src/consts/FromEnvVars'),
+jest.mock('../../../src/consts/FromEnvVars', () => ({
+    ...jest.requireActual('../../../src/consts/FromEnvVars'),
     BEARER_EXPIRES_IN: "1m"
 }))
 

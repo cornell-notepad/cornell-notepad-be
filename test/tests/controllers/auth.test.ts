@@ -29,7 +29,7 @@ describe('Auth', () => {
     afterAll(() => CornellNotepadService.stop())
 
     describe('POST /auth/sign-up', () => {
-        test.only('valid', async () => {
+        test('valid', async () => {
             await CornellNotepadService.signUp({
                 json: user
             })
@@ -118,7 +118,7 @@ describe('Auth', () => {
                 401,
                 "HTTPErrorBody"
             )
-            Assert.equal(message, "Invalid password")
+            Assert.equal(message, "Unauthorized")
         })
 
         test('no password', async () => {
@@ -150,11 +150,11 @@ describe('Auth', () => {
                         password
                     },
                 },
-                404,
+                401,
                 "HTTPErrorBody"
             )
             const message = signInResponse.message
-            Assert.equal(message, "User not found")
+            Assert.equal(message, "Unauthorized")
         })
         
         test('disconnected database', async () => {
