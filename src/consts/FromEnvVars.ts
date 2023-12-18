@@ -1,12 +1,27 @@
 import "dotenv/config"
-import {requireEnvVar} from "@vitaliystorchous/require-env-var";
+import * as env from 'env-var'
 
-export const DB_HOST = requireEnvVar('DB_HOST')
-export const DB_PORT = requireEnvVar('DB_PORT')
-export const DB_USER = requireEnvVar('DB_USER')
-export const DB_PASSWORD = requireEnvVar('DB_PASSWORD')
+export const DB_HOST = env.get('DB_HOST')
+  .required()
+  .asString()
+export const DB_PORT = env.get('DB_PORT')
+  .required()
+  .asString()
+export const DB_USER = env.get('DB_USER')
+  .required()
+  .asString()
+export const DB_PASSWORD = env.get('DB_PASSWORD')
+  .required()
+  .asString()
 
-export const PORT = Number(requireEnvVar('PORT', { default: '3000' })) || 3000
+export const PORT = env.get('PORT')
+  .default(3000)
+  .asPortNumber()
 
-export const API_SECRET = requireEnvVar('API_SECRET')
-export const BEARER_EXPIRES_IN = requireEnvVar('BEARER_EXPIRES_IN')
+export const API_SECRET = env.get('API_SECRET')
+  .required()
+  .asString()
+export const BEARER_EXPIRES_IN = env.get('BEARER_EXPIRES_IN')
+  .required()
+  .example('h1 | m10')
+  .asString()

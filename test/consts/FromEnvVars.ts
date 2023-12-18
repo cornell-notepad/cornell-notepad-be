@@ -1,5 +1,10 @@
 import "dotenv/config"
-import {requireEnvVar} from "@vitaliystorchous/require-env-var"
+import * as env from "env-var"
 
-export const SERVER_HOST = requireEnvVar('SERVER_HOST', { default: '127.0.0.1' })
-export const SERVER_PORT = Number(requireEnvVar('SERVER_PORT', { default: '3000' }))
+
+export const SERVER_HOST = env.get('SERVER_HOST')
+  .default('127.0.0.1')
+  .asString()
+export const SERVER_PORT = env.get('SERVER_PORT')
+  .default(3000)
+  .asPortNumber()
